@@ -15,7 +15,7 @@ class Board(models.Model):
     """Board model"""
     title = models.CharField("title", max_length=20)
     board_owner = models.ForeignKey("User", name="board_owner_id", on_delete=models.CASCADE)
-    list_order = ArrayField(models.IntegerField(), default=list)
+    list_order = ArrayField(models.IntegerField(), default=list, blank=True)
     created = models.DateTimeField("create", auto_now_add=True)
 
     def __str__(self):
@@ -26,7 +26,7 @@ class List(models.Model):
     """List model"""
     title = models.CharField("title", max_length=20)
     board = models.ForeignKey("Board", name="board_id", on_delete=models.CASCADE)
-    card_order = ArrayField(models.IntegerField(), default=list)
+    card_order = ArrayField(models.IntegerField(), default=list, blank=True)
     created = models.DateTimeField("create", auto_now_add=True)
 
     def __str__(self):
