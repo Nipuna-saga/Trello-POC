@@ -37,7 +37,7 @@ class Card(models.Model):
     """Card Model"""
     title = models.CharField("title", max_length=20)
     list = models.ForeignKey("List", name="list_id", on_delete=models.CASCADE)
-    description = models.TextField("description", null=True, blank=True)
+    description = models.TextField("description", null=True, blank=True, default="")
     due_date = models.DateTimeField("due_date", null=True, blank=True)
     created = models.DateTimeField("create", auto_now_add=True)
 

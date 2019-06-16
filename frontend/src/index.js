@@ -8,13 +8,14 @@ import Landing from "./components/landing-view";
 import BoardDetail from "./components/board-detail-view";
 import "./components/main.css";
 import * as serviceWorker from "./serviceWorker";
+import "bootstrap/dist/css/bootstrap.min.css";
 
 ReactDOM.render(
   <Router>
     <div>
       <Switch>
         <Route exact path="/" component={Landing} />
-        <Route exact path="/board" component={BoardDetail} />
+        <Route exact path="/board/:id" component={BoardDetail} />
       </Switch>
     </div>
   </Router>,

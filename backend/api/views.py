@@ -24,7 +24,7 @@ class UserView(APIView):
         if users_serializer.is_valid(raise_exception=ValueError):
             users_serializer.save()
 
-            content = {'response': data}
+            content = {'response': users_serializer.data}
         else:
             content = {'response': users_serializer.error_messages}
 
@@ -67,8 +67,15 @@ class BoardView(APIView):
 
     def get(self, request):
         """get all boards"""
-        board = Board.objects.all()
-        board_serializer = BoardSerializer(board, many=True)
+        param = request.GET.get('q', None)
+
+        if param is None:
+            board = Board.objects.all()
+            board_serializer = BoardSerializer(board, many=True)
+        else:
+            board = Board.objects.get(id=int(param))
+            board_serializer = BoardSerializer(board)
+
         return Response(board_serializer.data)
 
     def post(self, request):
@@ -79,7 +86,7 @@ class BoardView(APIView):
         if board_serializer.is_valid(raise_exception=ValueError):
             board_serializer.save()
 
-            content = {'response': data}
+            content = {'response': board_serializer.data}
         else:
             content = {'response': board_serializer.error_messages}
 

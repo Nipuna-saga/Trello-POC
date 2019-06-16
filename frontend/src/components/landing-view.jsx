@@ -1,61 +1,89 @@
 import React, { Component } from "react";
+import api from "./services/api";
+import formatter from "./utilities/formatter";
 
 import User from "./user-view";
 import Board from "./board-view";
 
 class Landing extends Component {
   state = {
-    users: [{ id: 1, name: "nipuna" }, { id: 2, name: "janitha" }],
-    boards: [
-      {
-        id: 3,
-        title: "board3",
-        list_order: [],
-        board_owner_id: 2
-      },
-      {
-        id: 4,
-        title: "board5",
-        list_order: [],
-        board_owner_id: 2
-      },
-      {
-        id: 1,
-        title: "board1",
-        list_order: [1, 2],
-        board_owner_id: 1
-      },
-      {
-        id: 2,
-        title: "board2",
-        list_order: [3, 4],
-        board_owner_id: 1
-      }
-    ],
+    users: [],
+    boards: [],
     currentUser: {},
     currentUserBoards: [],
     formData: { user: "", board: "" },
     userSelected: false
   };
+
+  componentDidMount = () => {
+    let { users, boards } = this.state;
+    api
+      .user()
+      .getUsers()
+
+      .then(data => {
+        users = data;
+        this.setState({ users });
+      })
+      .catch(error => {
+        console.log(error, "User retireive error");
+      });
+
+    api
+      .board()
+      .getBoards()
+
+      .then(data => {
+        boards = data;
+        this.setState({ boards });
+      })
+      .catch(error => {
+        console.log(error, "Board retireive error");
+      });
+  };
   //trigger when  press enter key
   handleOnPressEnterInput = e => {
-    let { users, formData, boards, currentUserBoards } = this.state;
+    let {
+      users,
+      formData,
+      boards,
+      currentUserBoards,
+      currentUser
+    } = this.state;
     if (e.which === 13 && formData[e.target.id] !== "") {
       if (e.target.id === "user") {
-        users.push({ id: users.length + 1, name: formData.user });
+        api
+          .user()
+          .insertUser(formatter.encoder().User(formData[e.target.id]))
+
+          .then(data => {
+            users.push(formatter.decoder().User(data));
+            this.setState({ users });
+          })
+          .catch(error => {
+            console.log(error, "User insert error");
+          });
       } else if (e.target.id === "board") {
-        const newBoard = {
-          id: boards.length + 1,
-          title: formData.board,
-          user: 1,
-          list_order: []
-        };
-        boards.push(newBoard);
-        currentUserBoards.push(newBoard);
+        api
+          .board()
+          .insertBoard(
+            formatter.encoder().Board(formData.board, currentUser.id)
+          )
+
+          .then(data => {
+            const formattedData = formatter.decoder().Board(data);
+
+            boards.push(formattedData);
+            currentUserBoards.push(formattedData);
+            this.setState({ boards, currentUserBoards });
+          })
+          .catch(error => {
+            console.log(error, "User insert error");
+          });
       }
 
       formData[e.target.id] = "";
-      this.setState({ users, formData, boards, currentUserBoards });
+      this.setState({ formData });
     }
   };
 
@@ -69,8 +97,43 @@ class Landing extends Component {
   //trigger when user click delete button
   handleOnClickUserDelete = e => {
     let { users } = this.state;
-    users = this.state.users.filter(x => x.id !== parseInt(e.target.id));
-    this.setState({ users });
+    const id = e.target.id;
+    api
+      .user()
+      .deleteUser(
+        formatter.encoder().UserDelete(users.find(x => x.id === parseInt(id)))
+      )
+
+      .then(data => {
+        users = users.filter(x => x.id !== parseInt(id));
+        this.setState({ users });
+      })
+      .catch(error => {
+        console.log(error, "Delete error");
+      });
+  };
+  //trigger when user click delete board button
+  handleOnClickBoardDelete = e => {
+    let { boards, currentUserBoards } = this.state;
+    const id = e.target.id;
+    api
+      .board()
+      .deleteBoard(
+        formatter
+          .encoder()
+          .BoardCurrent(boards.find(x => x.id === parseInt(id)))
+      )
+
+      .then(data => {
+        boards = boards.filter(x => x.id !== parseInt(id));
+        currentUserBoards = currentUserBoards.filter(
+          x => x.id !== parseInt(id)
+        );
+        this.setState({ boards, currentUserBoards });
+      })
+      .catch(error => {
+        console.log(error, "Delete error");
+      });
   };
 
   //trigger when  click on user entry
@@ -93,19 +156,28 @@ class Landing extends Component {
   };
 
   handleOnClickBoard = e => {
+    console.log("Delete error2");
     let { boards, currentUser } = this.state;
     const currentBoard = boards.filter(x => x.id === parseInt(e.target.id))[0];
-    let path = `board/`;
+    let path = `board/` + currentBoard.id;
     this.props.history.push({
       pathname: path,
-      state: { user: currentUser, board: currentBoard }
+      state: { user: currentUser }
     });
   };
 
   render() {
     return (
       <div>
-        <h1>Welcome</h1>
+        <div className="jumbotron jumbotron-fluid">
+          <div className="container">
+            <h1 className="display-4">Welcome to Trello POC</h1>
+            <p className="lead">
+              Please add users first, Then select user to add board. <br />{" "}
+              Click on board to look forward.
+            </p>
+          </div>
+        </div>
         <User
           userList={this.state.users}
           onPressEnterNewUserInput={this.handleOnPressEnterInput}
@@ -114,14 +186,18 @@ class Landing extends Component {
           onClickUser={this.handleOnClickUser}
           newUser={this.state.formData.user}
         />
-        <Board
-          userBoards={this.state.currentUserBoards}
-          isUserSelected={this.state.userSelected}
-          onPressEnterNewBoardInput={this.handleOnPressEnterInput}
-          onChangeBoardInput={this.handleOnChangeInput}
-          newBoard={this.state.formData.board}
-          onClickBoard={this.handleOnClickBoard}
-        />
+        {this.state.userSelected && (
+          <Board
+            userBoards={this.state.currentUserBoards}
+            isUserSelected={this.state.userSelected}
+            user={this.state.currentUser}
+            onPressEnterNewBoardInput={this.handleOnPressEnterInput}
+            onChangeBoardInput={this.handleOnChangeInput}
+            onClickBoardDelete={this.handleOnClickBoardDelete}
+            newBoard={this.state.formData.board}
+            onClickBoard={this.handleOnClickBoard}
+          />
+        )}
       </div>
     );
   }

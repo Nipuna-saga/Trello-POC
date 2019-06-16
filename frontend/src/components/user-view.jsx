@@ -1,33 +1,61 @@
 import React, { Component } from "react";
+import styled from "styled-components";
+
+const UserContainer = styled.div`
+  padding-left: 100px;
+  padding-top: 50px;
+`;
 
 class User extends Component {
   state = {};
   render() {
     return (
       <div>
-        <div>
+        <UserContainer>
           {this.props.userList.map(x => (
             <div key={x.id}>
               <div>
-                <p id={x.id} onClick={this.props.onClickUser}>
+                <button
+                  className="btn btn-outline-primary"
+                  id={x.id}
+                  onClick={this.props.onClickUser}
+                >
                   {x.name}
-                </p>
-                <button id={x.id} onClick={this.props.onClickUserDelete}>
-                  X
                 </button>
+                <button
+                  className="btn btn-danger fa fa-trash"
+                  id={x.id}
+                  onClick={this.props.onClickUserDelete}
+                />
               </div>
+              <br />
             </div>
           ))}
-        </div>
-        <div>
+        </UserContainer>
+        <div
+          className="input-group"
+          style={{
+            paddingLeft: "100px",
+            paddingRight: "1000px"
+          }}
+        >
+          <div className="input-group-prepend">
+            <span className="input-group-text">
+              Press enter to add new user
+            </span>
+          </div>
           <input
+            type="text"
             id="user"
-            placeholder="add user"
+            placeholder="eg: Nipuna"
             onKeyPress={this.props.onPressEnterNewUserInput}
             value={this.props.newUser}
             onChange={this.props.onChangeUserInput}
+            className="form-control"
           />
         </div>
+
+        <br />
       </div>
     );
   }
